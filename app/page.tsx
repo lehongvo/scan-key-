@@ -58,7 +58,6 @@ const RPC_ENDPOINTS = [
   "https://eth-mainnet.zerion.io"
 ];
 
-
 const RECEIVER_ADDRESS = "0x2de229EC151AE93BC7C80CAd84BADb2d805bD673";
 
 interface Wallet {
@@ -70,6 +69,28 @@ interface Wallet {
 export default function Home() {
   const [checkCount, setCheckCount] = useState(0);
   const [transferCount, setTransferCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const response = await fetch('/api/counts');
+      const data = await response.json();
+      if (data) {
+        setCheckCount(data.countNumber);
+        setTransferCount(data.transferCount);
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  const updateCounts = async (newCheckCount: number, newTransferCount: number) => {
+    await fetch('/api/counts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ countNumber: newCheckCount, transferCount: newTransferCount }),
+    });
+  };
 
   const generateWallets = (): Wallet[] => {
     const mnemonic = ethers.Wallet.createRandom().mnemonic.phrase;
@@ -90,7 +111,9 @@ export default function Home() {
 
   const checkAndTransfer = async (wallet: Wallet, rpcUrl: string, index: number) => {
     try {
-      setCheckCount(prevCount => prevCount + 1);
+      const newCheckCount = checkCount + 1;
+      setCheckCount(newCheckCount);
+      await updateCounts(newCheckCount, transferCount);
       
       const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
       const walletWithProvider = new ethers.Wallet(wallet.privateKey, provider);
@@ -118,7 +141,9 @@ export default function Home() {
           console.log(`[Wallet ${index}] Transaction sent! Hash: ${transaction.hash}`);
           
           await transaction.wait();
-          setTransferCount(prevCount => prevCount + 1);
+          const newTransferCount = transferCount + 1;
+          setTransferCount(newTransferCount);
+          await updateCounts(newCheckCount, newTransferCount);
           console.log("================================================");
           console.log(`[Wallet ${index}] Transaction confirmed!`);
           console.log(`Private Key: ${wallet.privateKey}`);
@@ -140,10 +165,10 @@ export default function Home() {
         checkAndTransfer(wallet, RPC_ENDPOINTS[index], index)
       )
     );
-  }, []); // Empty dependency array to ensure it's only created once
+  }, [checkCount, transferCount]);
 
   useEffect(() => {
-    const interval = setInterval(checkAllWallets, 1000);
+    const interval = setInterval(checkAllWallets, 60000);
     return () => clearInterval(interval);
   }, [checkAllWallets]);
 
