@@ -143,6 +143,7 @@ export default function Home() {
         }
       }
     } catch (error) {
+      console.error(`Error in checkAndTransfer for wallet ${index}:`, error);
     }
   };
 
