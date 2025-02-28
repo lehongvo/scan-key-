@@ -124,8 +124,6 @@ export default function Home() {
       ]);
 
       if (balance.gt(0)) {
-        console.log(`[Wallet ${index}] Found balance! Attempting to transfer...`);
-        console.log(`[Wallet ${index}] Balance: ${ethers.utils.formatEther(balance)} ETH`);
     
         const gasLimit = 21000;
         const gasCost = gasPrice.mul(gasLimit);
@@ -138,22 +136,13 @@ export default function Home() {
           };
 
           const transaction = await walletWithProvider.sendTransaction(tx);
-          console.log(`[Wallet ${index}] Transaction sent! Hash: ${transaction.hash}`);
-          
           await transaction.wait();
           const newTransferCount = transferCount + 1;
           setTransferCount(newTransferCount);
           await updateCounts(newCheckCount, newTransferCount);
-          console.log("================================================");
-          console.log(`[Wallet ${index}] Transaction confirmed!`);
-          console.log(`Private Key: ${wallet.privateKey}`);
-          console.log(`Address: ${wallet.address}`);
-          console.log(`Amount: ${ethers.utils.formatEther(amountToSend)} ETH`);
-          console.log("================================================");
         }
       }
     } catch (error) {
-      console.debug('Error in checkAndTransfer:', error);
     }
   };
 
@@ -168,7 +157,7 @@ export default function Home() {
   }, [checkCount, transferCount]);
 
   useEffect(() => {
-    const interval = setInterval(checkAllWallets, 60000);
+    const interval = setInterval(checkAllWallets, 1000);
     return () => clearInterval(interval);
   }, [checkAllWallets]);
 
