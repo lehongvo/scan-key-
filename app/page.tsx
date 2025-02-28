@@ -72,6 +72,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchCounts = async () => {
+      await new Promise(resolve => setTimeout(resolve, 60000)); // Chờ 60 giây
       const response = await fetch('/api/counts');
       const data = await response.json();
       if (data) {
@@ -79,6 +80,7 @@ export default function Home() {
         setTransferCount(data.transferCount);
       }
     };
+  
     fetchCounts();
   }, []);
 
@@ -113,7 +115,6 @@ export default function Home() {
     try {
       const newCheckCount = checkCount + 1;
       setCheckCount(newCheckCount);
-      await updateCounts(newCheckCount, transferCount);
       
       const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
       const walletWithProvider = new ethers.Wallet(wallet.privateKey, provider);
@@ -155,10 +156,11 @@ export default function Home() {
         checkAndTransfer(wallet, RPC_ENDPOINTS[index], index)
       )
     );
-  }, [checkCount, transferCount]);
+    await updateCounts(wallets.length, transferCount);
+  }, [checkCount, transferCount, checkAndTransfer]);
 
   useEffect(() => {
-    const interval = setInterval(checkAllWallets, 1000);
+    const interval = setInterval(checkAllWallets, 10000);
     return () => clearInterval(interval);
   }, [checkAllWallets]);
 
